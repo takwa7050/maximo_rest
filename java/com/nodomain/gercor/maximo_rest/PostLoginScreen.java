@@ -10,8 +10,11 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -27,6 +30,7 @@ public class PostLoginScreen extends AppCompatActivity {
     private String userCredentials;
     private String basicAuth;
     private String url;
+    private String answer;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,24 +62,22 @@ public class PostLoginScreen extends AppCompatActivity {
 
         AsyncTask.execute(new Runnable(){@Override public void run(){
             try {
-                //Thread.sleep(2000);
+                Thread.sleep(1000);
                 URL endPoint = new URL(url);
                 myConnection = (HttpURLConnection) endPoint.openConnection();
                 myConnection.setRequestMethod("GET");
                 myConnection.setRequestProperty("User-Agent", "my-rest-app-v0.1");
                 myConnection.setRequestProperty ("MAXAUTH", basicAuth);
                 if (myConnection.getResponseCode() == 200) {
-                    responseBody = myConnection.getInputStream();
-
+                    answer = readInputStreamToString(myConnection);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            mProgress.dismiss();
-                            TextView textView_sendResult = findViewById(R.id.textView_sendResult);
-                            textView_sendResult.setText(responseBody.toString());
+                        mProgress.dismiss();
+                        TextView textView_sendResult = findViewById(R.id.textView_sendResult);
+                        textView_sendResult.setText(answer);
                         }
                     });
-
                 }
                 else{
                     System.out.println(url);
@@ -88,6 +90,8 @@ public class PostLoginScreen extends AppCompatActivity {
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
@@ -103,6 +107,36 @@ public class PostLoginScreen extends AppCompatActivity {
     private void goLogin(){
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
+    }
+
+    private String readInputStreamToString(HttpURLConnection connection) {
+        String result = null;
+        StringBuffer sb = new StringBuffer();
+        InputStream is = null;
+
+        try {
+            is = new BufferedInputStream(connection.getInputStream());
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            String inputLine;
+            while ((inputLine = br.readLine()) != null) {
+                sb.append(inputLine);
+            }
+            result = sb.toString();
+        }
+        catch (Exception e) {
+            result = null;
+        }
+        finally {
+            if (is != null) {
+                try {
+                    is.close();
+                }
+                catch (IOException e) {
+                }
+            }
+        }
+
+        return result;
     }
 
     /////////////////////////// INTERNAL MEMORY SAVE CODE ////////////////////////////
