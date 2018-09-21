@@ -12,17 +12,21 @@ import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
-import java.util.Base64;
-
-import javax.net.ssl.HttpsURLConnection;
+import android.util.Base64;
 
 public class PostLoginScreen extends AppCompatActivity {
 
     private ProgressDialog mProgress;
-    private HttpsURLConnection myConnection;
+    private HttpURLConnection myConnection;
     private InputStream responseBody;
+    private String userCredentials;
+    private String basicAuth;
+    private String url;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +37,15 @@ public class PostLoginScreen extends AppCompatActivity {
         super.onStart();
         if(inMemoryGet("username").equals("") || inMemoryGet("password").equals("")){
             goLogin();
+        }
+        else{
+            userCredentials = inMemoryGet("username") + ":" + inMemoryGet("password");
+            try {
+                basicAuth = Base64.encodeToString(userCredentials.getBytes("UTF-8"), Base64.DEFAULT);
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            url = "http://200.110.132.176/maxrest/rest/mbo/person/?personid=" + inMemoryGet("username");
         }
     }
 
@@ -45,15 +58,11 @@ public class PostLoginScreen extends AppCompatActivity {
 
         AsyncTask.execute(new Runnable(){@Override public void run(){
             try {
-                Thread.sleep(2000);
-
-                String url = "http://200.110.132.176/maxrest/rest/mbo/person/?personid=" + inMemoryGet("username");
+                //Thread.sleep(2000);
                 URL endPoint = new URL(url);
-                myConnection = (HttpsURLConnection) endPoint.openConnection();
+                myConnection = (HttpURLConnection) endPoint.openConnection();
                 myConnection.setRequestMethod("GET");
                 myConnection.setRequestProperty("User-Agent", "my-rest-app-v0.1");
-                String userCredentials = inMemoryGet("username") + ":" + inMemoryGet("password");
-                String basicAuth = new String(Base64.getEncoder().encode(userCredentials.getBytes()));
                 myConnection.setRequestProperty ("MAXAUTH", basicAuth);
                 if (myConnection.getResponseCode() == 200) {
                     responseBody = myConnection.getInputStream();
@@ -68,14 +77,20 @@ public class PostLoginScreen extends AppCompatActivity {
                     });
 
                 }
-
-            } catch (InterruptedException e) {
+                else{
+                    System.out.println(url);
+                    System.out.println(userCredentials);}
+                    System.out.println(basicAuth.toString());
+                    System.out.println(myConnection.getResponseCode());
+                }
+              catch (ProtocolException e) {
                 e.printStackTrace();
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
         }});
     }
 
