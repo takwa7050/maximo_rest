@@ -1,18 +1,23 @@
 package com.nodomain.gercor.maximo_rest;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if(!inMemoryGet("username").equals("") && !inMemoryGet("password").equals("")){
+            postLogin();
+        }
     }
 
     public void button_save(View view){
@@ -21,11 +26,18 @@ public class MainActivity extends AppCompatActivity {
         EditText password = findViewById(R.id.editText_password);
         String pass = password.getText().toString();
         if (!user.equals("") && !pass.equals("")){
-            System.out.println("Usuario: " + user + ". Password: " + pass);
+            inMemorySet("username",user);
+            inMemorySet("password",pass);
+            postLogin();
         }
         else{
-            System.out.println("Usuario o clave vacios");
+            Toast.makeText(MainActivity.this,"Username & Password required", Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void postLogin(){
+        Intent intent = new Intent(this, PostLoginScreen.class);
+        startActivity(intent);
     }
 
     /////////////////////////// INTERNAL MEMORY SAVE CODE ////////////////////////////
